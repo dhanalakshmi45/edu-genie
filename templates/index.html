@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGenie</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f4f8;
+            color: #222;
+        }
+
+        .container {
+            width: min(900px, 92%);
+            margin: 40px auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            margin-bottom: 8px;
+        }
+
+        .card {
+            background: white;
+            padding: 24px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #2878e8;
+            color: white;
+            font-weight: bold;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .result {
+            margin-top: 16px;
+            padding: 15px;
+            min-height: 20px;
+            background: #f7f7fa;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .quiz-question {
+            padding: 15px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .option {
+            padding: 8px;
+            margin: 6px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 94%;
+                margin: 20px auto;
+            }
+
+            .card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <header>
+            <h1>Welcome to EduGenie 🧠✨</h1>
+            <p>Your personal AI tutor for learning support</p>
+        </header>
+
+        <section class="card">
+            <h2>Ask EduGenie a Question</h2>
+            <input id="qaInput" type="text" placeholder="e.g. What is the largest ocean?">
+            <button onclick="askQuestion()">Get Answer</button>
+            <div id="qaResult" class="result"></div>
+        </section>
+
+        <section class="card">
+            <h2>Need an Explanation?</h2>
+            <input id="explainInput" type="text" placeholder="e.g. Quantum Computing">
+            <button onclick="explainTopic()">Explain</button>
+            <div id="explainResult" class="result"></div>
+        </section>
+
+        <section class="card">
+            <h2>Summarize a Paragraph</h2>
+            <textarea id="summaryInput" placeholder="Paste long content to summarize"></textarea>
+            <button onclick="summarizeText()">Summarize</button>
+            <div id="summaryResult" class="result"></div>
+        </section>
+
+        <section class="card">
+            <h2>Generate a Quiz</h2>
+            <input id="quizInput" type="text" placeholder="e.g. Pythagoras theorem">
+            <button onclick="generateQuiz()">Generate Quiz</button>
+            <div id="quizResult" class="result"></div>
+        </section>
+
+        <section class="card">
+            <h2>Get Learning Recommendations</h2>
+            <input id="learnInput" type="text" placeholder="e.g. SQL">
+            <button onclick="getRecommendations()">Get Recommendations</button>
+            <div id="learnResult" class="result"></div>
+        </section>
+    </main>
+
+    <script>
+        function showResult(id, content) {
+            document.getElementById(id).innerHTML = content;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById("qaInput").value.trim();
+            if (!question) return;
+
+            const response = await fetch(`/qa?question=${encodeURIComponent(question)}`);
+            const data = await response.json();
+
+            showResult(
+                "qaResult",
+                `<strong>Answer:</strong><p>${escapeHtml(data.answer || data.error)}</p>`
+            );
+        }
+
+        async function explainTopic() {
+            const topic = document.getElementById("explainInput").value.trim();
+            if (!topic) return;
+
+            const response = await fetch("/explain", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic })
+            });
+
+            const data = await response.json();
+
+            showResult(
+                "explainResult",
+                `<strong>Explanation:</strong><p>${escapeHtml(data.explanation || data.error)}</p>`
+            );
+        }
+
+        async function summarizeText() {
+            const text = document.getElementById("summaryInput").value.trim();
+            if (!text) return;
+
+            const response = await fetch("/summarize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text })
+            });
+
+            const data = await response.json();
+
+            showResult(
+                "summaryResult",
+                `<strong>Summary:</strong><p>${escapeHtml(data.summary || data.error)}</p>`
+            );
+        }
+
+        async function generateQuiz() {
+            const text = document.getElementById("quizInput").value.trim();
+            if (!text) return;
+
+            const response = await fetch("/quiz", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text })
+            });
+
+            const data = await response.json();
+            const quiz = data.quiz || [];
+
+            if (!Array.isArray(quiz)) {
+                showResult("quizResult", `<p>${escapeHtml(String(quiz))}</p>`);
+                return;
+            }
+
+            showResult(
+                "quizResult",
+                quiz.map((item, index) => `
+                    <div class="quiz-question">
+                        <strong>Q${index + 1}. ${escapeHtml(item.question || item.error || "")}</strong>
+                        ${(item.options || []).map(option =>
+                    `<div class="option">${escapeHtml(option)}</div>`
+                ).join("")}
+                        ${item.answer ? `<p><strong>Answer:</strong> ${escapeHtml(item.answer)}</p>` : ""}
+                    </div>
+                `).join("")
+            );
+        }
+
+        async function getRecommendations() {
+            const topic = document.getElementById("learnInput").value.trim();
+            if (!topic) return;
+
+            const response = await fetch(
+                `/learn/recommendations?topic=${encodeURIComponent(topic)}`
+            );
+
+            const data = await response.json();
+
+            showResult(
+                "learnResult",
+                `<strong>Learning Path:</strong><pre>${escapeHtml(
+                    data.recommendation || data.error
+                )}</pre>`
+            );
+        }
+    </script>
+</body>
+
+</html>
